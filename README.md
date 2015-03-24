@@ -93,7 +93,7 @@ bundle.jsのソースマップファイルから、AltJSへと直接紐づける必要があります。
 中間ファイルのソースマップファイルであるhoge.js.mapやfoo.js.mapのgeneratedの位置情報と、
 生成物のソースマップファイルであるbundle.js.mapのoriginalの位置情報が対になっていると読み取れます。
 
-![ソースマップのプロット画像](https://raw.github.com/wiki/wordijp/altjs-browserify-base-project/multi_source_map_prot.png)
+![ソースマップのプロット画像](https://github.com/wordijp/altjs-browserify-base-project/blob/master/multi_source_map_prot.png)
 
 この対になっている位置情報を基に、AltJSのoriginalの位置情報と、生成物のbundle.jsのgeneratedの位置情報を取り出せれば、多段ソースマップの問題が解決出来る事になります。
 
