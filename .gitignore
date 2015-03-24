@@ -1,0 +1,10 @@
+node_modules/
+typings/
+src_typings/
+public/
+lib/
+lib_tmp/
+tmp/
+
+src/**/*.js
+
