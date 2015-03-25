@@ -1,6 +1,7 @@
 node_modules/
 typings/
 src_typings/
+src_typings_tmp/
 public/
 lib/
 lib_tmp/

@@ -7,6 +7,7 @@ plumber     = require 'gulp-plumber'
 duration    = require 'gulp-duration'
 sourcemaps  = require 'gulp-sourcemaps'
 uglify      = require 'gulp-uglify'
+changed     = require 'gulp-changed'
 browserify  = require 'browserify'
 watchify    = require 'watchify'
 runSequence = require 'run-sequence'
@@ -61,6 +62,8 @@ gulp.task 'check:rename-module', () ->
 gulp.task 'mkdir', () ->
   if (!fs.existsSync('src_typings'))
       fs.mkdir('src_typings')
+  if (!fs.existsSync('src_typings_tmp'))
+      fs.mkdir('src_typings_tmp')
 
 # build tasks ---
 gulp.task 'build:lib', (cb) ->
@@ -72,7 +75,7 @@ gulp.task 'build:lib', (cb) ->
 
 # ts build task
 dtsBundleTsModule = (tag) ->
-  main = tag.file.replace(/^src/, 'src_typings').replace(/.ts$/, '.d.ts')
+  main = tag.file.replace(/^src/, 'src_typings_tmp').replace(/.ts$/, '.d.ts')
   dts.bundle(
     name: tag.value
     main: main
@@ -80,11 +83,11 @@ dtsBundleTsModule = (tag) ->
   )
 
 createTsModuleRootFile = () ->
-  root_file = 'src_typings/tsd.d.ts'
-  files = globule.find(['src_typings/**/*.d.ts', '!' + root_file])
+  root_file = 'src_typings_tmp/tsd.d.ts'
+  files = globule.find(['src_typings_tmp/**/*.d.ts', '!' + root_file])
   str = ""
   for x in files
-    x = x.replace('src_typings/', '') # root_fileからの相対パスへ
+    x = x.replace('src_typings_tmp/', '') # root_fileからの相対パスへ
     str += "/// <reference path=\"#{x}\" />\n"
   
   fs.writeFileSync(root_file, str)
@@ -121,15 +124,15 @@ createTsModuleStream = (tags) ->
 
   merge [
     stream.dts
-      .pipe(gulp.dest 'src_typings')
+      .pipe(gulp.dest 'src_typings_tmp')
       .pipe(callback(() ->
         tags.forEach(dtsBundleTsModule) # 外部モジュール化
-        createTsModuleRootFile()        # 外部モジュールの定義ファイル作成
+        createTsModuleRootFile()        # 外部モジュールのルート定義ファイル作成
       ))
 
     stream.js
       .pipe(dbgWriteSourcemaps '.', {
-        sourceRoot: '../' + same_path # 省略された同名のパスをここで補う
+        sourceRoot: '../' + same_path # sourcesから同名のパスが省略されてしまうので、ここで補う
         includeContent: false
       })
       .pipe(gulp.dest 'lib_tmp')
@@ -152,7 +155,7 @@ createTsMainStream = (tags) ->
     .pipe(ts ts_main_proj)
     .js
     .pipe(dbgWriteSourcemaps '.', {
-      sourceRoot: '../' + same_path # 省略された同名のパスをここで補う
+      sourceRoot: '../' + same_path # sourcesから同名のパスが省略されてしまうので、ここで補う
       includeContent: false
     })
     .pipe(gulp.dest 'lib_tmp')
@@ -163,6 +166,14 @@ gulp.task 'pre-build:ts', () ->
   
   streamqueue({objectMode: true},
     createTsModuleStream(tags),
+    # ファンクタを渡せるのを利用した遅延評価
+    # NOTE : ユーザ外部モジュール作成後にする必要がある為
+    () ->
+      # IDE等の定義ファイル更新と被るといけないので変更分だけ差し替える
+      gulp.src('src_typings_tmp/**/*.*')
+        .pipe(changed 'src_typings', {hasChanged: changed.compareSha1Digest})
+        .pipe(gulp.dest 'src_typings')
+    ,
     # ファンクタを渡せるのを利用した遅延評価
     # NOTE : ユーザ外部モジュール作成後にする必要がある為
     () -> createTsMainStream(tags)
@@ -298,7 +309,7 @@ gulp.task 'watch', ['pre-watch'], () ->
   
 gulp.task 'build', (cb) -> runSequence('clean', 'build:lib', 'browserify', cb)
 
-gulp.task 'clean', (cb) -> del(['public', 'lib', 'src_typings', 'tmp', 'lib_tmp'], cb)
+gulp.task 'clean', (cb) -> del(['public', 'lib', 'src_typings', 'src_typings_tmp', 'tmp', 'lib_tmp'], cb)
 
 gulp.task 'default', () ->
   console.log 'usage) gulp (watch | build | clean) [--env production]'
