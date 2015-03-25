@@ -209,9 +209,8 @@ gulp.task 'browserify-core', () ->
   args = _.merge(watchify.args, {
     cache: {}
     packageCache: {}
-    fullPaths: !is_production # true : 開発用(差分ビルドが速い)
-                              # false : 公開用(絶対パスの公開は避けたい)
-    
+    fullPaths: false
+   
     debug: !is_production
   })
   b = browserify(args)
@@ -226,7 +225,9 @@ gulp.task 'browserify-core', () ->
   )
   for x in main_files
     b.add(x)
+    b.require(x)
   for x in module_tags
+    b.add(x.file)
     b.require(x.file, expose: x.value)
     
   bundle = () ->
