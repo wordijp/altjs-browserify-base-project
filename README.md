@@ -4,6 +4,7 @@
 
 “Æ©Šg’£‚Æ‚µ‚ÄˆÈ‰º‚Ì‘Î‰‚ğ‚µ‚Ä‚¢‚Ü‚·B
 - require‚Éalias‚ğw’èo—ˆ‚é
+	- ]—ˆ‚Ì‘Š‘ÎƒpƒXw’è‚ào—ˆ‚é
 - TypeScript‚É‚ÄAƒ†[ƒUŠO•”ƒ‚ƒWƒ…[ƒ‹‹y‚ÑŒ^’è‹`ƒtƒ@ƒCƒ‹‚Ì©“®¶¬(import hoge = require(alias–¼);‚Æ‘‚¯‚é)
 	- [ƒ\[ƒX‚Ö‚Ìrequire—p‚ÌaliasAƒ†[ƒUŠO•”ƒ‚ƒWƒ…[ƒ‹‰»‚É‚Â‚¢‚Ä](#alias)
 - ‘½’iƒ\[ƒXƒ}ƒbƒv‚Ì–â‘è‚ğ‰ğŒˆ‚µABrowserify¶¬‚Ìjsƒtƒ@ƒCƒ‹‚©‚ç‚Å‚àAltJS‚Ìƒ\[ƒX‚Ébreakpoint‚ğ“\‚ê‚é
@@ -120,6 +121,11 @@ srcƒfƒBƒŒƒNƒgƒŠ—p‚Ì’è‹`ƒtƒ@ƒCƒ‹‚Ígulp‚Å©“®¶¬‚³‚êA‚Ü‚½ATypeScript‚ğ•ÒW‚µ‚½
 		
 - srcƒfƒBƒŒƒNƒgƒŠ—p‚Ì’è‹`ƒtƒ@ƒCƒ‹
 	- src_typings/tsd.d.ts
+
+```ts
+/// <reference path="../../typings/tsd.d.ts" />
+/// <reference path="../../src_typings/tsd.d.ts" />
+```
 
 ## Licence
 
