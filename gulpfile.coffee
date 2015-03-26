@@ -1,5 +1,4 @@
 gulp        = require 'gulp'
-watch       = require 'gulp-watch'
 gutil       = require 'gulp-util'
 coffee      = require 'gulp-coffee'
 ts          = require 'gulp-typescript'
@@ -31,6 +30,7 @@ notifyError     = require './gulpscripts/notify-error'
 callback        = require './gulpscripts/gulp-callback'
 samePath        = require './gulpscripts/same-path'
 mergeSourcemaps = require './gulpscripts/merge-multi-sourcemap'
+toRelativePath  = require './gulpscripts/to-relative-path'
 
 errorHandler = (err) -> notifyError(err.plugin || 'compile error', err.message, err.toString()) # plumber用
 
@@ -298,15 +298,16 @@ gulp.task 'watch', ['pre-watch'], () ->
  
   # (add | unlink) watch
   addOrUnlinkWatch = (watch_files, cb) ->
-    options =
-      events: ['add', 'unlink']
-    for x in watch_files
-      watch [x], options, cb # 拡張子別にwatchしないと誤作動する
+    watcher = gulp.watch(watch_files)
+    watcher.on('change', (e) ->
+      if (e.type is 'added' or e.type is 'deleted')
+        cb(e)
+    )
   addOrUnlinkWatch [
     'src/**/*.ts'
     'src/**/*.coffee'
   ], (e) ->
-    notifyError('add or unlink', 'please restart gulp') # browserifyの参照ファイルを設定しなおす必要がある
+    notifyError('add or unlink', 'please restart gulp', toRelativePath(e.path) + " is " + e.type) # browserifyの参照ファイルを設定しなおす必要がある
   
 gulp.task 'build', (cb) -> runSequence('clean', 'build:lib', 'browserify', cb)
 
