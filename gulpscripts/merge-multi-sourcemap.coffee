@@ -5,9 +5,17 @@
 #       https://github.com/azu/multi-stage-sourcemap
 
 sourceMap = require "source-map"
-_ = require 'lodash'
 Generator = sourceMap.SourceMapGenerator
 Consumer  = sourceMap.SourceMapConsumer
+
+# ëgÇ›çûÇ›ÇÃjoinÇÕíxÇ¢ÇÃÇ≈ÅAÇªÇÃïœÇÌÇË
+strJoin = (strs, delim) ->
+  str = ""
+  for x, i in strs
+    if (i > 0)
+      str += delim
+    str += x
+  str
 
 # pathÇÃèÁí∑Ç»ìoÇËç~ÇËÇñ≥Ç≠Ç∑
 # usage) path   : src/sub1/../sub2/a.ts
@@ -16,8 +24,8 @@ resolvePath = (path) ->
   new_path = []
   for x in path.split('/')
     if (x is '..')
-      if (new_path.length > 0 && _.last(new_path) isnt '..')
-        new_path = _.dropRight(new_path)
+      if (new_path.length > 0 && new_path[new_path.length-1] isnt '..')
+        new_path.pop()
       else
         new_path.push(x)
     else if (x is '.')
@@ -25,7 +33,7 @@ resolvePath = (path) ->
     else
       new_path.push(x)
       
-  new_path.join('/')
+  strJoin(new_path, '/')
 
 # ï°êîÇÃpathÇòAåãÇ∑ÇÈ
 joinPaths = () ->
@@ -84,7 +92,7 @@ filteredUseMapping = (consumer) ->
     )
 
   uses
-  
+ 
 # firstÇ∆secondÇÃmappingÇçáê¨Ç∑ÇÈ
 mergedGenerator = (first, firstUses, firstMapRoot, second, _, secondMapRoot) ->
   result = new Generator(
@@ -95,8 +103,10 @@ mergedGenerator = (first, firstUses, firstMapRoot, second, _, secondMapRoot) ->
   firstFile = joinPaths(firstMapRoot, first.file)
   firstFile = resolvePath(firstFile)
   
+  re = new RegExp('^(' + second.sourceRoot + '/)?')
+
   # NOTE : eachMappingÇÃsourceÇ…ÇÕÅAé©ìÆÇ≈SourceMapGeneratorÇÃsourceRootÇ™ïtó^Ç≥ÇÍÇƒÇ¢ÇÈ
-  
+
   second.eachMapping (x) ->
     secondSource = joinPaths(secondMapRoot, x.source)
     secondSource = resolvePath(secondSource)
@@ -104,7 +114,7 @@ mergedGenerator = (first, firstUses, firstMapRoot, second, _, secondMapRoot) ->
     if (firstFile != secondSource)
       # çáê¨Ç∆ñ≥ä÷åWÇ»ÇÁÇªÇÃÇ‹Ç‹í«â¡
       result.addMapping(
-        source: x.source.replace(new RegExp('^(' + second.sourceRoot + '/)?'), '')
+        source: x.source.replace(re, '')
         name: x.name
         generated:
           line: x.generatedLine
