@@ -231,11 +231,9 @@ gulp.task 'browserify-core', () ->
     b.require(x.file, expose: x.value)
     
   bundle = () ->
-    gulp.src('', {buffer: false})
-      .pipe(plumber(
-        errorHandler: errorHandler
-      ))
-      .pipe(b.bundle())
+    b
+      .bundle()
+      .on('error', errorHandler)
       .pipe(source 'bundle.js')
       .pipe(buffer())
       .pipe(dbgInitSourcemaps {loadMaps: true})
