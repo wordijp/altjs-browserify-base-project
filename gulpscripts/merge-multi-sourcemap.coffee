@@ -8,6 +8,8 @@ sourceMap = require "source-map"
 Generator = sourceMap.SourceMapGenerator
 Consumer  = sourceMap.SourceMapConsumer
 
+_ = require 'lodash'
+
 # 組み込みのjoinは遅いので、その変わり
 strJoin = (strs, delim) ->
   str = ""
@@ -93,15 +95,22 @@ filteredUseMapping = (consumer) ->
 
   uses
  
-# firstとsecondのmappingを合成する
-mergedGenerator = (first, firstUses, firstMapRoot, second, _, secondMapRoot) ->
+# firstsとsecondのmappingを合成する
+mergedGenerators = (firsts, firstUses, firstMapRoots, second, __, secondMapRoot) ->
   result = new Generator(
     file: second.file
     sourceRoot: second.sourceRoot
   )
   
-  firstFile = joinPaths(firstMapRoot, first.file)
-  firstFile = resolvePath(firstFile)
+  if (firsts.length != firstUses.length ||
+      firsts.length != firstMapRoots.length)
+    throw "length is illegal"
+  
+  firstFiles = []
+  for i in [0...firsts.length]
+    x = joinPaths(firstMapRoots[i], firsts[i].file)
+    x = resolvePath(x)
+    firstFiles.push(x)
   
   re = new RegExp('^(' + second.sourceRoot + '/)?')
 
@@ -111,7 +120,8 @@ mergedGenerator = (first, firstUses, firstMapRoot, second, _, secondMapRoot) ->
     secondSource = joinPaths(secondMapRoot, x.source)
     secondSource = resolvePath(secondSource)
 
-    if (firstFile != secondSource)
+    firstIndex = _.findIndex(firstFiles, (x) -> x == secondSource)
+    if (firstIndex < 0)
       # 合成と無関係ならそのまま追加
       result.addMapping(
         source: x.source.replace(re, '')
@@ -127,15 +137,14 @@ mergedGenerator = (first, firstUses, firstMapRoot, second, _, secondMapRoot) ->
     
     # 紐づいたfirstを検索
     relation_first = undefined
-    for y in firstUses
+    for y in firstUses[firstIndex]
       if (x.originalLine == y.generatedLine)
         relation_first = y
         break
 
     # 合成したmappingを追加する
     if (relation_first?)
-      #firstSource = joinPaths(firstMapRoot, first.sourceRoot, relation_first.source)
-      firstSource = joinPaths(firstMapRoot, relation_first.source)
+      firstSource = joinPaths(firstMapRoots[firstIndex], relation_first.source)
       firstSource = resolvePath(firstSource)
 
       result.addMapping(
@@ -155,18 +164,26 @@ mergedGenerator = (first, firstUses, firstMapRoot, second, _, secondMapRoot) ->
 # firstObj   : 一段階目トランスパイル後のsourcemap object
 # secondObj  : 二段階目(最終)トランスパイル後のsourcemap object
 # NOTE : sourcemap object : { value: mapファイルの文字列, maproot: mapファイルのルートパス }
-merge = (firstObj, secondObj) ->
-  first = new Consumer(firstObj.value)
+merge = (firstObj, secondObj) -> merges([firstObj], secondObj)
+
+module.exports.merge = merge
+
+
+# 複数のsourcemapを合成して返す
+# firstObjs  : 一段階目トランスパイル後の複数のsourcemap object
+# secondObj  : 二段階目(最終)トランスパイル後のsourcemap object
+merges = (firstObjs, secondObj) ->
+  firsts = firstObjs.map((x) -> new Consumer(x.value))
   second = new Consumer(secondObj.value)
   
-  firstUses = filteredUseMapping(first)
+  firstUses = firsts.map((x) -> filteredUseMapping(x))
   #secondUses = filteredUseMapping(second)
 
-  result = mergedGenerator(
-    first, firstUses, firstObj.maproot,
+  result = mergedGenerators(
+    firsts, firstUses, firstObjs.map((x) -> x.maproot),
     second, undefined, secondObj.maproot
   )
 
   result.toString()
 
-module.exports.merge = merge
+module.exports.merges = merges

@@ -250,19 +250,16 @@ gulp.task 'browserify-core', () ->
           second = fs.readFileSync('public/bundle.js.map').toString().trim()
           
           files = globule.find('./lib/**/*.js.map')
-          for x in files
-            first = fs.readFileSync(x).toString().trim()
-            mapvalue = mergeSourcemaps.merge(
-              {
-                value: first
-                maproot: 'lib'
-              },
-              {
-                value: second
-                maproot: 'public'
-              }
-            )
-            second = mapvalue
+          second = mergeSourcemaps.merges(
+            files.map((x) -> {
+              value: fs.readFileSync(x).toString().trim()
+              maproot: 'lib'
+            }),
+            {
+              value: second
+              maproot: 'public'
+            }
+          )
             
           fs.renameSync('public/bundle.js.map', 'public/bundle.js.map.old') # 保存前にオリジナルを退避
           fs.writeFileSync('public/bundle.js.map', second)
