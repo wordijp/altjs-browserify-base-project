@@ -1,5 +1,7 @@
 # 概要
 
+**このプロジェクトの内容は古くなりました、新しいプロジェクトはこちらの[wordijp/frontend-base-project](https://github.com/wordijp/frontend-base-project)です。**
+
 このプロジェクトは、AltJS(TypeScript & CoffeeScript) & Browserify構成の雛形プロジェクトです。
 
 独自拡張として以下の対応をしています。
